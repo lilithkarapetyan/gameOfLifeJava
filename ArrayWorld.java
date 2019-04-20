@@ -3,33 +3,27 @@ import com.sun.net.ssl.TrustManagerFactorySpi;
 public class ArrayWorld extends World {
 
     private boolean[][] world;
-
+	private boolean[] deadRow;
     public ArrayWorld(String serial) throws PatternFormatException {
         super(serial);
         this.world = new boolean[this.getHeight()][this.getWidth()];
+		this.deadRow = new boolean[this.getWidth()];
         this.getPattern().initialise(this);
-        // boolean[] deadRow = new boolean[this.getWidth()];
-        // boolean flag = false;
-        // for (int i = 0; i < world.length; i++) {
-        //     flag = false;
-        //     for (int j = 0; j < world[i].length; j++) {
-        //         if (world[i][j])
-        //             flag = true;
-        //     }
-        //     if(!flag)
-        //         world[i] = deadRow;
-        // }
+        this.manageRows();
     }
 
     public ArrayWorld(Pattern pattern) throws PatternFormatException {
         super(pattern);
         this.world = new boolean[this.getHeight()][this.getWidth()];
+		this.deadRow = new boolean[this.getWidth()];
         this.getPattern().initialise(this);
+		this.manageRows(this.world);
     }
 
     public ArrayWorld(ArrayWorld otherWorld) throws PatternFormatException {
         super(otherWorld.getPattern());
         this.world = new boolean[this.getHeight()][this.getWidth()];
+		this.deadRow = new boolean[this.getWidth()];
         this.generation = otherWorld.getGenerationCount();
         int width = otherWorld.getWidth();
         int height = otherWorld.getHeight();
@@ -38,6 +32,7 @@ public class ArrayWorld extends World {
                 this.setCell(j, i, otherWorld.getCell(j, i));
             }
         }
+		this.manageRows(this.world);
     }
 
     public ArrayWorld clone() throws CloneNotSupportedException {
@@ -56,9 +51,25 @@ public class ArrayWorld extends World {
                 cloned.setCell(j, i, this.getCell(j, i));
             }
         }
+		this.manageRows(cloned);
         return cloned;
     }
-
+	
+	
+	public void manageRows(ArrayWorld world){
+		boolean flag = false;
+		for (int i = 0; i < world.length; i++) {
+			flag = false;
+			for (int j = 0; j < world[i].length; j++) {
+				if (world[i][j])
+					flag = true;
+			}
+			if(!flag)
+				world[i] = world.deadRow;
+        }
+	}
+	
+	
     public boolean getCell(int col, int row) {
         if (row < 0 || row >= this.getHeight()) {
             return false;
@@ -76,7 +87,11 @@ public class ArrayWorld extends World {
         if (col < 0 || col >= getWidth()) {
             return;
         }
-        this.world[row][col] = value;
+		if(world[row] == this.deadRow && value){
+			world[row] = new boolean[world[row].length];
+		}
+		this.world[row][col] = value;
+		this.manageRows(this.world);
     }
 
     protected void nextGenerationImpl() {

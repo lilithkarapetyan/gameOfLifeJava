@@ -26,16 +26,8 @@ public class GamePanel extends JPanel {
                 }
             }
             g.setColor(Color.BLACK);
-            g.drawString("Generation - " + this.world.getGenerationCount(), size , (i+1)*size);
+            g.drawString("Generation - " + this.world.getGenerationCount(), 10 , this.getHeight() - 10);
         }
-        // Sample drawing statements
-        /*g.fillRect(140, 140, 30, 30);
-        g.fillRect(260, 140, 30, 30);
-        g.setColor(Color.BLACK);
-        g.drawLine(150, 300, 280, 300);
-        g.drawString("@@@", 135, 120);
-        g.drawString("@@@", 255, 120);
-        */
     }
 
     public void display(World w) {

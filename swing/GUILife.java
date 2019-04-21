@@ -1,17 +1,11 @@
-import javax.swing.JFrame;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JComponent;
-import javax.swing.border.*;
-import javax.swing.BorderFactory;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.*;
-import java.awt.event.*;
+import java.util.Timer;
 
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.awt.BorderLayout;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+
+import java.awt.*;
+import java.awt.event.*;
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -21,10 +15,10 @@ public class GUILife extends JFrame {
 	private World world;
 	private ArrayList<World> cachedWorlds = new ArrayList<>();
 	private GamePanel gamePanel;
-	/*
-	 * public GUILife(PatternStore ps) { super("Game of Life"); this.store = ps;
-	 * setDefaultCloseOperation(EXIT_ON_CLOSE); setSize(1024,768); }
-	 */
+	private JButton playButton;
+	private Timer timer;
+	private boolean playing = false;
+
 	private World copyWorld(boolean useCloning) throws IOException, CloneNotSupportedException, PatternFormatException {
 		World copy = null;
 		if (!useCloning) {
@@ -57,13 +51,7 @@ public class GUILife extends JFrame {
 
 	private JPanel createGamePanel() {
 		this.gamePanel = new GamePanel();
-		try {
-			this.cachedWorlds.add(new ArrayWorld(store.getPatterns()[0]));
-			this.world = this.cachedWorlds.get(0);
-			gamePanel.display(this.world);
-		} catch (Exception ex) {
-
-		}
+		this.gamePanel.display(this.world);
 		addBorder(gamePanel, "Game Panel");
 		return gamePanel;
 	}
@@ -71,7 +59,33 @@ public class GUILife extends JFrame {
 	private JPanel createPatternsPanel() {
 		JPanel patt = new JPanel();
 		patt.setLayout(new BorderLayout());
-		patt.add(new JScrollPane(new JList(this.store.getPatternsNameSorted().toArray())));
+		JList list = new JList(this.store.getPatternsNameSorted().toArray());
+		list.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				if (timer != null) {
+					timer.cancel();
+					playing = false;
+					playButton.setText("Play");
+					cachedWorlds.clear();
+				}
+
+				JList<Pattern> l = (JList<Pattern>) e.getSource();
+				Pattern p = l.getSelectedValue();
+				try {
+					if (p.getWidth() * p.getHeight() > 64) {
+						cachedWorlds.add(new ArrayWorld(p));
+					} else {
+						cachedWorlds.add(new PackedWorld(p));
+					}
+				} catch (Exception ex) {
+
+				}
+
+				world = cachedWorlds.get(cachedWorlds.size() - 1);
+				gamePanel.display(world);
+			}
+		});
+		patt.add(new JScrollPane(list));
 		addBorder(patt, "Patterns");
 		return patt;
 	}
@@ -80,46 +94,44 @@ public class GUILife extends JFrame {
 		JPanel ctrl = new JPanel();
 		addBorder(ctrl, "Controls");
 		ctrl.setLayout(new GridLayout(1, 3));
-		JButton back = new JButton("Back");
-		JButton play = new JButton("Play");
-		JButton fwd = new JButton("Forward");
-
-		back.addActionListener(new ActionListener() {
+		JButton backButton = new JButton("Back");
+		JButton fwdButton = new JButton("Forward");
+		playButton = new JButton("Play");
+		backButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				try{
-					moveBack();
-					gamePanel.display(world);
-				}
-				catch(Exception ex){
-					System.out.println("BAck button does not work " + ex.getClass());
+				if (world != null) {
+					try {
+						moveBack();
+						gamePanel.display(world);
+					} catch (Exception ex) {
+						System.out.println("BAck button does not work " + ex.getClass());
+					}
 				}
 			}
 		});
-		play.addActionListener(new ActionListener() {
+		playButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				try{
-					moveBack();
+				if (world != null) {
+					runOrPause();
 					gamePanel.display(world);
-				}
-				catch(Exception ex){
-					System.out.println("Play button does not work " + ex.getClass());
 				}
 			}
 		});
-		fwd.addActionListener(new ActionListener() {
+		fwdButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				try{
-					moveForward();
-					gamePanel.display(world);
-				}
-				catch(Exception ex){
-					System.out.println("FWD button does not work " + ex.getClass());
+				if (world != null) {
+					try {
+						moveForward();
+						gamePanel.display(world);
+					} catch (Exception ex) {
+						System.out.println("FWD button does not work " + ex.getClass());
+					}
 				}
 			}
 		});
-		ctrl.add(back);
-		ctrl.add(play);
-		ctrl.add(fwd);
+		ctrl.add(backButton);
+		ctrl.add(playButton);
+		ctrl.add(fwdButton);
 
 		return ctrl;
 	}
@@ -144,16 +156,32 @@ public class GUILife extends JFrame {
 		}
 	}
 
+	private void runOrPause() {
+		if (playing) {
+			timer.cancel();
+			playing = false;
+			playButton.setText("Play");
+		} else {
+			playing = true;
+			playButton.setText("Stop");
+			timer = new Timer(true);
+			timer.scheduleAtFixedRate(new TimerTask() {
+				@Override
+				public void run() {
+					try {
+						moveForward();
+						gamePanel.display(world);
+					} catch (Exception ex) {
+					}
+				}
+			}, 0, 500);
+		}
+	}
+
 	public static void main(String args[]) throws Exception {
-		// if (args.length != 1) {
-		// System.out.println("Usage: java GameOfLife <path/url to store>");
-		// return;
-		// }
 		try {
-			// args[0] = args[0] ? args[0]: "https://bit.ly/2FJERFh";
 			PatternStore ps = new PatternStore("https://bit.ly/2FJERFh");
 			GUILife gui = new GUILife(ps);
-			// .play();
 			gui.setVisible(true);
 		} catch (Exception e) {
 			e.printStackTrace();

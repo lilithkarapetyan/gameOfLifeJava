@@ -6,12 +6,10 @@ public class GamePanel extends JPanel {
 
     @Override
     protected void paintComponent(java.awt.Graphics g) {
-        // Paint the background white
-
         g.setColor(java.awt.Color.WHITE);
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
         if (this.world != null) {
-            int height =  this.getHeight()/(this.world.getHeight() + 1);
+            int height =  this.getHeight()/(this.world.getHeight()+ 1); //to save space for the textmm
             int width =  this.getWidth()/this.world.getWidth();
             int size = Math.min(height, width);
             int i,j;

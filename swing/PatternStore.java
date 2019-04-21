@@ -13,6 +13,14 @@ public class PatternStore {
         }
     }
 
+    public Pattern[] getPatterns() {
+        Pattern[] result = new Pattern[patterns.size()];
+        for(int i=0; i < patterns.size(); ++i){
+            result[i] = patterns.get(i);
+        }
+        return result;
+    }
+
     public PatternStore(Reader source) throws Exception {
         load(source);
     }

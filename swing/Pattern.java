@@ -89,6 +89,10 @@ public class Pattern implements Comparable<Pattern> {
         return this.cells;
     }
 
+    public String toString(){
+        return this.author + " - "+ this.name;
+    }
+
     public void initialise(World world) throws PatternFormatException {
 
         String[] update = this.cells.split(" ");
